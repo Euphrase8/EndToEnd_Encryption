@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sender Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input, textarea, button, select {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <h1>Sender Interface</h1>
+
+    <h2>Enter a Message</h2>
+    <input type="text" id="message" placeholder="Enter message to encrypt" />
+
+    <h2>Choose Encryption Type</h2>
+    <select id="encryption-type" onchange="updateKeyPlaceholder()">
+        <option value="">--Select Encryption Type--</option>
+        <option value="RSA">RSA</option>
+        <option value="ElGamal">ElGamal</option>
+    </select>
+
+    <h2>Public Key</h2>
+    <input type="text" id="public-key" placeholder="Select encryption type first" disabled />
+
+    <button onclick="encryptMessage()">Encrypt</button>
+
+    <h2>Encrypted Message</h2>
+    <textarea id="encrypted-message" readonly placeholder="Encrypted message will appear here"></textarea>
+
+    <h2>Token</h2>
+    <input type="text" id="token" placeholder="Enter a token for the message" />
+
+    <button onclick="sendToReceiver()">Send to Receiver</button>
+</div>
+
+<script>
+    function updateKeyPlaceholder() {
+        const encryptionType = document.getElementById('encryption-type').value;
+        const publicKeyInput = document.getElementById('public-key');
+
+        if (encryptionType === "RSA") {
+            publicKeyInput.placeholder = "Enter RSA public key (e,n)";
+            publicKeyInput.disabled = false; // Enable the input
+        } else if (encryptionType === "ElGamal") {
+            publicKeyInput.placeholder = "Enter ElGamal public key (g,y,p)";
+            publicKeyInput.disabled = false; // Enable the input
+        } else {
+            publicKeyInput.placeholder = "Select encryption type first";
+            publicKeyInput.disabled = true; // Disable the input if no type is selected
+        }
+    }
+
+    function encryptMessage() {
+        const message = document.getElementById('message').value;
+        const publicKey = document.getElementById('public-key').value;
+        const encryptionType = document.getElementById('encryption-type').value;
+
+        if (!encryptionType) {
+            alert("Please select an encryption type.");
+            return;
+        }
+
+        if (!publicKey) {
+            alert("Please enter the public key.");
+            return;
+        }
+
+        fetch('/encrypt', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({ message: message, public_key: publicKey, encryption_type: encryptionType })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('encrypted-message').value = data.encrypted_message;
+        });
+    }
+
+    function sendToReceiver() {
+        const cipherText = document.getElementById('encrypted-message').value;
+        const token = document.getElementById('token').value;
+
+        if (!cipherText) {
+            alert("Please encrypt the message before sending.");
+            return;
+        }
+
+        if (!token) {
+            alert("Please enter a token for the message.");
+            return;
+        }
+
+        fetch('/send_to_receiver', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({ cipher_text: cipherText, token: token })
+        })
+        .then(() => alert("Message sent to receiver!"));
+    }
+</script>
+
+</body>
+</html>
+
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receiver Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input, textarea, button, select {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <h1>Receiver Interface</h1>
+
+    <h2>Encrypted Message + Token</h2>
+    <textarea id="encrypted-message-with-token" readonly></textarea>
+
+    <button onclick="verifyToken()">Verify Token</button>
+
+    <h2>Extracted Cipher Text</h2>
+    <textarea id="cipher-text" readonly placeholder="Cipher text will appear here"></textarea>
+
+    <h2>Choose Decryption Type</h2>
+    <select id="decryption-type">
+        <option value="RSA">RSA</option>
+        <option value="ElGamal">ElGamal</option>
+    </select>
+
+    <h2>Private Key</h2>
+    <input type="text" id="private-key" placeholder="Enter private key (d,n)" />
+
+    <button onclick="decryptMessage()" id = "button">Decrypt</button>
+
+    <h2>Decrypted Message</h2>
+    <textarea id="decrypted-message" readonly placeholder="Decrypted message will appear here"></textarea>
+</div>
+
+<script>
+    // Automatically fetch the encrypted message with token when the page loads
+    window.onload = function() {
+        fetch('/get_encrypted_message')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('encrypted-message-with-token').value = data.encrypted_message_with_token;
+        });
+    };
+
+    function verifyToken() {
+        const encryptedMessageWithToken = document.getElementById('encrypted-message-with-token').value;
+        const [cipherText, token] = encryptedMessageWithToken.split(":");
+        document.getElementById('cipher-text').value = cipherText;
+        alert("Token verified!");
+    }
+
+    function decryptMessage() {
+        const cipherText = document.getElementById('cipher-text').value;
+        const decryptionType = document.getElementById('decryption-type').value;
+        const privateKey = document.getElementById('private-key').value;
+
+        fetch('/decrypt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ encrypted_message: cipherText, private_key: privateKey, encryption_type: decryptionType })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.decrypted_message === "Incorrect key!") {
+                alert("Incorrect key!");
+            } else {
+                document.getElementById('decrypted-message').value = data.decrypted_message;
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
